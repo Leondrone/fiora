@@ -16,13 +16,15 @@ function CreateGroup(props: CreateGroupProps) {
     const { visible, onClose } = props;
     const action = useAction();
     const [groupName, setGroupName] = useState('');
+    const [priGroup, updatePriGroup] = useState(false)
 
     async function handleCreateGroup() {
-        const group = await createGroup(groupName);
+        const group = await createGroup(groupName,priGroup);
         if (group) {
             group.type = 'group';
             action.addLinkman(group, true);
             setGroupName('');
+            updatePriGroup(false)
             onClose();
             Message.success('创建群组成功');
         }
@@ -36,6 +38,13 @@ function CreateGroup(props: CreateGroupProps) {
                     className={Style.input}
                     value={groupName}
                     onChange={setGroupName}
+                />
+                <h3 className={Style.text}>私有群组</h3>
+                <Switch
+                    thumbColor={"#000000"}
+                    trackColor={{false:"#eeeeee",true:"#999999"}}
+                    onValueChange = {updatePriGroup} 
+                    value= {priGroup} 
                 />
                 <button
                     className={Style.button}

@@ -40,12 +40,14 @@ function CreateGroup(props: CreateGroupProps) {
                     onChange={setGroupName}
                 />
                 <h3 className={Style.text}>私有群组</h3>
-                <Switch
-                    thumbColor={"#000000"}
-                    trackColor={{false:"#eeeeee",true:"#999999"}}
-                    onValueChange = {updatePriGroup} 
-                    value= {priGroup} 
-                />
+                <select
+                    value={priGroup} // ...强制选择框的值与 state 相匹配...
+                    onChange={e => updatePriGroup(e.target.value)} // ... 并在每次改变（change）时更新 state
+                    >
+                    <option :value="false">公开</option>
+                    <option :value="true">私有</option>
+                </select>
+     
                 <button
                     className={Style.button}
                     onClick={handleCreateGroup}

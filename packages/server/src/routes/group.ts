@@ -77,6 +77,7 @@ export async function createGroup(ctx: Context<{ name: string, priGroup:boolean 
         avatar: newGroup.avatar,
         createTime: newGroup.createTime,
         creator: newGroup.creator,
+        priGroup:newGroup.priGroup,
     };
 }
 

@@ -50,7 +50,7 @@ function ChatListRightButton() {
                     autoCorrect={false}
                 />
                 <Dialog.Description>私有群组</Dialog.Description>
-                <Dialog.Input
+                <Dialog.Switch
                     thumbColor={"#000000"}
                     trackColor={{false:"#eeeeee",true:"#999999"}}
                     onValueChange = {updatePriGroup} 

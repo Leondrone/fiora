@@ -7,16 +7,18 @@ import { createGroup } from '../../service';
 import action from '../../state/action';
 
 function ChatListRightButton() {
-    const [showDialog, toggleDialog] = useState(false);
+    const [showDialog, toggleDialog ] = useState(false);
     const [groupName, updateGroupName] = useState('');
+    const [priGroup, updatePriGroup] = useState(false)
 
     function handleCloseDialog() {
         updateGroupName('');
+        updatePriGroup(false);
         toggleDialog(false);
     }
 
     async function handleCreateGroup() {
-        const group = await createGroup(groupName);
+        const group = await createGroup(groupName,priGroup);
         if (group) {
             action.addLinkman({
                 ...group,
@@ -46,6 +48,13 @@ function ChatListRightButton() {
                     autoCapitalize="none"
                     autoFocus
                     autoCorrect={false}
+                />
+                <Dialog.Description>私有群组</Dialog.Description>
+                <Dialog.Input
+                    thumbColor={"#000000"}
+                    trackColor={{false:"#eeeeee",true:"#999999"}}
+                    onValueChange = {updatePriGroup} 
+                    value= {priGroup} 
                 />
                 <Dialog.Button label="取消" onPress={handleCloseDialog} />
                 <Dialog.Button label="创建" onPress={handleCreateGroup} />

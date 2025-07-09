@@ -39,7 +39,7 @@ async function getGroupOnlineMembersHelper(group: GroupDocument) {
  * 创建群组
  * @param ctx Context
  */
-export async function createGroup(ctx: Context<{ name: string }>) {
+export async function createGroup(ctx: Context<{ name: string, priGroup:boolean }>) {
     assert(!config.disableCreateGroup, '管理员已关闭创建群组功能');
 
     const ownGroupCount = await Group.count({ creator: ctx.socket.user });
@@ -48,9 +48,9 @@ export async function createGroup(ctx: Context<{ name: string }>) {
         `创建群组失败, 你已经创建了${config.maxGroupsCount}个群组`,
     );
 
-    const { name } = ctx.data;
+    const { name,priGroup } = ctx.data;
     assert(name, '群组名不能为空');
-
+    assert(name, '群组类型不能为空');
     const group = await Group.findOne({ name });
     assert(!group, '该群组已存在');
 
@@ -61,6 +61,7 @@ export async function createGroup(ctx: Context<{ name: string }>) {
             avatar: getRandomAvatar(),
             creator: ctx.socket.user,
             members: [ctx.socket.user],
+            priGroup,
         } as GroupDocument);
     } catch (err) {
         if (err.name === 'ValidationError') {

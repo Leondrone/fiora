@@ -46,7 +46,7 @@ export async function search(ctx: Context<{ keywords: string }>) {
         { avatar: 1, username: 1 },
     );
     const groups = await Group.find(
-        { name: { $regex: escapedKeywords } },
+        { name: { $regex: escapedKeywords },priGroup:false },
         { avatar: 1, name: 1, members: 1 },
     );
 

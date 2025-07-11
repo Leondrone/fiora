@@ -25,8 +25,8 @@ const GroupSchema = new Schema({
         default: false,
     },
     priGroup:{
-        type: Boolean,
-        default: false,
+        type: String,
+        default: '00',
     },
     members: [
         {
@@ -52,7 +52,7 @@ export interface GroupDocument extends Document {
     /** 创建时间 */
     createTime: Date;
     /** 是否为私有群组 */
-    priGroup: boolean;
+    priGroup: string;
 }
 
 /**

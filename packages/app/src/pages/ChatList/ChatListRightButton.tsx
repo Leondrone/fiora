@@ -9,11 +9,11 @@ import action from '../../state/action';
 function ChatListRightButton() {
     const [showDialog, toggleDialog ] = useState(false);
     const [groupName, updateGroupName] = useState('');
-    const [priGroup, updatePriGroup] = useState(false)
+    const [priGroup, updatePriGroup] = useState('00')
 
     function handleCloseDialog() {
         updateGroupName('');
-        updatePriGroup(false);
+        updatePriGroup('00');
         toggleDialog(false);
     }
 
@@ -48,13 +48,6 @@ function ChatListRightButton() {
                     autoCapitalize="none"
                     autoFocus
                     autoCorrect={false}
-                />
-                <Dialog.Description>私有群组</Dialog.Description>
-                <Dialog.Switch
-                    thumbColor={"#000000"}
-                    trackColor={{false:"#eeeeee",true:"#999999"}}
-                    onValueChange = {updatePriGroup} 
-                    value= {priGroup} 
                 />
                 <Dialog.Button label="取消" onPress={handleCloseDialog} />
                 <Dialog.Button label="创建" onPress={handleCreateGroup} />

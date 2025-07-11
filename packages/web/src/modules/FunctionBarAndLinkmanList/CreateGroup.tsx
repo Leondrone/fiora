@@ -16,7 +16,7 @@ function CreateGroup(props: CreateGroupProps) {
     const { visible, onClose } = props;
     const action = useAction();
     const [groupName, setGroupName] = useState('');
-    const [priGroup, updatePriGroup] = useState(false)
+    const [priGroup, updatePriGroup] = useState('00')
 
     async function handleCreateGroup() {
         const group = await createGroup(groupName,priGroup);
@@ -44,8 +44,8 @@ function CreateGroup(props: CreateGroupProps) {
                     value={priGroup} // ...强制选择框的值与 state 相匹配...
                     onChange={e => updatePriGroup(e.target.value)} // ... 并在每次改变（change）时更新 state
                     >
-                    <option value={false}>公开</option>
-                    <option value={true}>私有</option>
+                    <option value="00">公开</option>
+                    <option value="01">私有</option>
                 </select>
      
                 <button

@@ -39,7 +39,7 @@ async function getGroupOnlineMembersHelper(group: GroupDocument) {
  * 创建群组
  * @param ctx Context
  */
-export async function createGroup(ctx: Context<{ name: string;priGroup:boolean }>) {
+export async function createGroup(ctx: Context<{ name: string ; priGroup: string }>) {
     assert(!config.disableCreateGroup, '管理员已关闭创建群组功能');
 
     const ownGroupCount = await Group.count({ creator: ctx.socket.user });

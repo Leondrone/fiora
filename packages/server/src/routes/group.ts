@@ -50,7 +50,7 @@ export async function createGroup(ctx: Context<{ name: string;priGroup:boolean }
 
     const { name,priGroup } = ctx.data;
     assert(name, '群组名不能为空');
-    assert(name, '群组类型不能为空');
+    assert(priGroup, '群组类型不能为空');
     const group = await Group.findOne({ name });
     assert(!group, '该群组已存在');
 

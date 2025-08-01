@@ -9,6 +9,7 @@ import {
     ScrollableInkTabBar,
 } from '../../components/Tabs';
 import CreateGroup from './CreateGroup';
+import JoinGroupByInviteCode from './JoinGroupByInviteCode';
 import { ShowUserOrGroupInfoContext } from '../../context';
 import { search } from '../../service';
 
@@ -27,6 +28,9 @@ function FunctionBar() {
     const [searchResultVisible, toggleSearchResultVisible] = useState(false);
     const [searchResultActiveKey, setSearchResultActiveKey] = useState('all');
     const [createGroupDialogVisible, toggleCreateGroupDialogVisible] = useState(
+        false,
+    );
+    const [joinGroupByInviteCodeVisible, toggleJoinGroupByInviteCodeVisible] = useState(
         false,
     );
     const [searchResult, setSearchResult] = useState<SearchResult>({
@@ -166,15 +170,26 @@ function FunctionBar() {
                 />
             </form>
             <i className={`iconfont icon-search ${Style.searchIcon}`} />
-            <IconButton
-                className={Style.createGroupButton}
-                style={{ display: addButtonVisible ? 'block' : 'none' }}
-                width={40}
-                height={40}
-                icon="add"
-                iconSize={38}
-                onClick={() => toggleCreateGroupDialogVisible(true)}
-            />
+            <div className={Style.buttonGroup} style={{ display: addButtonVisible ? 'flex' : 'none' }}>
+                <IconButton
+                    className={Style.createGroupButton}
+                    width={40}
+                    height={40}
+                    icon="add"
+                    iconSize={38}
+                    onClick={() => toggleCreateGroupDialogVisible(true)}
+                    title="创建群组"
+                />
+                <IconButton
+                    className={Style.joinGroupButton}
+                    width={40}
+                    height={40}
+                    icon="link"
+                    iconSize={38}
+                    onClick={() => toggleJoinGroupByInviteCodeVisible(true)}
+                    title="通过邀请码加入群组"
+                />
+            </div>
             <Tabs
                 className={Style.searchResult}
                 style={{ display: searchResultVisible ? 'block' : 'none' }}
@@ -283,6 +298,10 @@ function FunctionBar() {
             <CreateGroup
                 visible={createGroupDialogVisible}
                 onClose={() => toggleCreateGroupDialogVisible(false)}
+            />
+            <JoinGroupByInviteCode
+                visible={joinGroupByInviteCodeVisible}
+                onClose={() => toggleJoinGroupByInviteCodeVisible(false)}
             />
         </div>
     );

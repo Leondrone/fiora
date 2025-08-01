@@ -194,6 +194,43 @@ export async function joinGroup(groupId: string) {
 }
 
 /**
+ * 生成群组邀请码
+ * @param groupId 群组id
+ * @param expireHours 过期时间（小时）
+ */
+export async function generateGroupInviteCode(groupId: string, expireHours: number = 24) {
+    const [, result] = await fetch('generateGroupInviteCode', { groupId, expireHours });
+    return result;
+}
+
+/**
+ * 通过邀请码加入群组
+ * @param inviteCode 邀请码
+ */
+export async function joinGroupByInviteCode(inviteCode: string) {
+    const [, group] = await fetch('joinGroupByInviteCode', { inviteCode });
+    return group;
+}
+
+/**
+ * 获取群组邀请码信息
+ * @param groupId 群组id
+ */
+export async function getGroupInviteCodeInfo(groupId: string) {
+    const [, result] = await fetch('getGroupInviteCodeInfo', { groupId });
+    return result;
+}
+
+/**
+ * 获取群组基本信息
+ * @param groupId 群组id
+ */
+export async function getGroupBasicInfo(groupId: string) {
+    const [, result] = await fetch('getGroupBasicInfo', { groupId });
+    return result;
+}
+
+/**
  * 离开群组
  * @param groupId 群组id
  */

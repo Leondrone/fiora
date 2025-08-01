@@ -81,3 +81,12 @@ export const Redis = {
 
 export const DisableSendMessageKey = 'DisableSendMessage';
 export const DisableNewUserSendMessageKey = 'DisableNewUserSendMessageKey';
+
+// 邀请码相关函数
+export function getGroupInviteCodeKey(inviteCode: string) {
+    return `GroupInviteCode-${inviteCode}`;
+}
+
+export function getGroupInviteCodeByGroupKey(groupId: string) {
+    return `GroupInviteCodeByGroup-${groupId}`;
+}

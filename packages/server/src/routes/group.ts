@@ -1,12 +1,14 @@
 import assert, { AssertionError } from 'assert';
 import { Types } from '@fiora/database/mongoose';
 import stringHash from 'string-hash';
+import crypto from 'crypto';
 
 import config from '@fiora/config/server';
 import getRandomAvatar from '@fiora/utils/getRandomAvatar';
 import Group, { GroupDocument } from '@fiora/database/mongoose/models/group';
 import Socket from '@fiora/database/mongoose/models/socket';
 import Message from '@fiora/database/mongoose/models/message';
+import { Redis, getGroupInviteCodeKey, getGroupInviteCodeByGroupKey } from '@fiora/database/redis/initRedis';
 
 const { isValid } = Types.ObjectId;
 
@@ -48,7 +50,7 @@ export async function createGroup(ctx: Context<{ name: string ; priGroup: string
         `创建群组失败, 你已经创建了${config.maxGroupsCount}个群组`,
     );
 
-    const { name,priGroup } = ctx.data;
+    const { name, priGroup } = ctx.data;
     assert(name, '群组名不能为空');
     assert(priGroup, '群组类型不能为空');
     const group = await Group.findOne({ name });
@@ -77,7 +79,7 @@ export async function createGroup(ctx: Context<{ name: string ; priGroup: string
         avatar: newGroup.avatar,
         createTime: newGroup.createTime,
         creator: newGroup.creator,
-        priGroup:newGroup.priGroup,
+        priGroup: newGroup.priGroup,
     };
 }
 
@@ -335,5 +337,172 @@ export async function getGroupBasicInfo(ctx: Context<{ groupId: string }>) {
         name: group.name,
         avatar: group.avatar,
         members: group.members.length,
+    };
+}
+
+/**
+ * 生成群组邀请码
+ * @param ctx Context
+ */
+export async function generateGroupInviteCode(ctx: Context<{ groupId: string; expireHours?: number }>) {
+    const { groupId, expireHours = 24 } = ctx.data;
+    assert(isValid(groupId), '无效的群组ID');
+
+    const group = await Group.findOne({ _id: groupId });
+    if (!group) {
+        throw new AssertionError({ message: '群组不存在' });
+    }
+
+    // 只有私有群组才能生成邀请码
+    assert(group.priGroup === '01', '只有私有群组才能生成邀请码');
+    
+    // 只有群主才能生成邀请码
+    assert(
+        group.creator.toString() === ctx.socket.user.toString(),
+        '只有群主才能生成邀请码',
+    );
+
+    // 生成6位随机邀请码
+    const inviteCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+    
+    // 存储邀请码信息到Redis，包含群组ID和过期时间
+    const inviteData = {
+        groupId: groupId,
+        creator: ctx.socket.user,
+        expireTime: Date.now() + expireHours * 60 * 60 * 1000,
+    };
+
+    // 设置邀请码，24小时过期
+    await Redis.set(
+        getGroupInviteCodeKey(inviteCode),
+        JSON.stringify(inviteData),
+        Redis.Hour * expireHours
+    );
+
+    // 记录群组的邀请码，用于后续清理
+    await Redis.set(
+        getGroupInviteCodeByGroupKey(groupId),
+        inviteCode,
+        Redis.Hour * expireHours
+    );
+
+    return {
+        inviteCode,
+        expireTime: inviteData.expireTime,
+        groupName: group.name,
+    };
+}
+
+/**
+ * 通过邀请码加入群组
+ * @param ctx Context
+ */
+export async function joinGroupByInviteCode(ctx: Context<{ inviteCode: string }>) {
+    const { inviteCode } = ctx.data;
+    assert(inviteCode && inviteCode.length === 6, '邀请码格式不正确');
+
+    // 从Redis获取邀请码信息
+    const inviteDataStr = await Redis.get(getGroupInviteCodeKey(inviteCode));
+    if (!inviteDataStr) {
+        throw new AssertionError({ message: '邀请码不存在或已过期' });
+    }
+
+    const inviteData = JSON.parse(inviteDataStr);
+    
+    // 检查邀请码是否过期
+    if (Date.now() > inviteData.expireTime) {
+        // 删除过期的邀请码
+        await Redis.expire(getGroupInviteCodeKey(inviteCode), 0);
+        throw new AssertionError({ message: '邀请码已过期' });
+    }
+
+    const groupId = inviteData.groupId;
+    const group = await Group.findOne({ _id: groupId });
+    if (!group) {
+        throw new AssertionError({ message: '群组不存在' });
+    }
+
+    // 检查用户是否已经在群组中
+    assert(group.members.indexOf(ctx.socket.user) === -1, '你已经在群组中');
+
+    // 将用户添加到群组
+    group.members.push(ctx.socket.user);
+    await group.save();
+
+    // 获取群组最近的消息
+    const messages = await Message.find(
+        { toGroup: groupId },
+        {
+            type: 1,
+            content: 1,
+            from: 1,
+            createTime: 1,
+        },
+        { sort: { createTime: -1 }, limit: 3 },
+    ).populate('from', { username: 1, avatar: 1 });
+    messages.reverse();
+
+    // 加入群组socket房间
+    ctx.socket.join(group._id.toString());
+
+    // 删除已使用的邀请码
+    await Redis.expire(getGroupInviteCodeKey(inviteCode), 0);
+    await Redis.expire(getGroupInviteCodeByGroupKey(groupId), 0);
+
+    return {
+        _id: group._id,
+        name: group.name,
+        avatar: group.avatar,
+        createTime: group.createTime,
+        creator: group.creator,
+        messages,
+    };
+}
+
+/**
+ * 获取群组的邀请码信息
+ * @param ctx Context
+ */
+export async function getGroupInviteCodeInfo(ctx: Context<{ groupId: string }>) {
+    const { groupId } = ctx.data;
+    assert(isValid(groupId), '无效的群组ID');
+
+    const group = await Group.findOne({ _id: groupId });
+    if (!group) {
+        throw new AssertionError({ message: '群组不存在' });
+    }
+
+    // 只有私有群组才能查看邀请码信息
+    assert(group.priGroup === '01', '只有私有群组才能查看邀请码信息');
+    
+    // 只有群主才能查看邀请码信息
+    assert(
+        group.creator.toString() === ctx.socket.user.toString(),
+        '只有群主才能查看邀请码信息',
+    );
+
+    // 获取群组的邀请码
+    const inviteCode = await Redis.get(getGroupInviteCodeByGroupKey(groupId));
+    if (!inviteCode) {
+        return {
+            hasInviteCode: false,
+        };
+    }
+
+    // 获取邀请码详细信息
+    const inviteDataStr = await Redis.get(getGroupInviteCodeKey(inviteCode));
+    if (!inviteDataStr) {
+        return {
+            hasInviteCode: false,
+        };
+    }
+
+    const inviteData = JSON.parse(inviteDataStr);
+    
+    return {
+        hasInviteCode: true,
+        inviteCode,
+        expireTime: inviteData.expireTime,
+        isExpired: Date.now() > inviteData.expireTime,
     };
 }

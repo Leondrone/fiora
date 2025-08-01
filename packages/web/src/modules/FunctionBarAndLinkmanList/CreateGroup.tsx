@@ -24,7 +24,7 @@ function CreateGroup(props: CreateGroupProps) {
             group.type = 'group';
             action.addLinkman(group, true);
             setGroupName('');
-            updatePriGroup(false)
+            updatePriGroup('00')
             onClose();
             Message.success('创建群组成功');
         }

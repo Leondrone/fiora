@@ -83,12 +83,20 @@ function FunctionBar() {
     function handleInputEnter() {
         setTimeout(async () => {
             if (keywords) {
-                const result = await search(keywords);
-                if (result?.users?.length || result?.groups?.length) {
-                    setSearchResult(result);
-                } else {
-                    Message.warning('没有搜索到内容, 换个关键字试试吧~');
-                    setSearchResult({ users: [], groups: [] });
+                console.log('开始搜索，关键词:', keywords);
+                try {
+                    const result = await search(keywords);
+                    console.log('搜索结果:', result);
+                    if (result?.users?.length || result?.groups?.length) {
+                        setSearchResult(result);
+                    } else {
+                        console.log('没有找到搜索结果');
+                        Message.warning('没有搜索到内容, 换个关键字试试吧~');
+                        setSearchResult({ users: [], groups: [] });
+                    }
+                } catch (error) {
+                    console.error('搜索出错:', error);
+                    Message.error('搜索失败，请重试');
                 }
             }
         }, 0);

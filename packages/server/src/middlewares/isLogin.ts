@@ -16,6 +16,8 @@ export default function isLogin(socket: Socket) {
         'getBaiduToken',
         'getGroupBasicInfo',
         'getSTS',
+        'search',
+        'searchExpression',
     ]);
     return async ([event, , cb]: MiddlewareArgs, next: MiddlewareNext) => {
         if (!noRequireLoginEvent.has(event) && !socket.data.user) {

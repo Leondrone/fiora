@@ -33,7 +33,10 @@ let lastBaiduTokenTime = Date.now();
  */
 export async function search(ctx: Context<{ keywords: string }>) {
     const keywords = ctx.data.keywords?.trim() || '';
+    logger.info('[search] 搜索关键词:', keywords);
+    
     if (keywords === '') {
+        logger.info('[search] 关键词为空，返回空结果');
         return {
             users: [],
             groups: [],
@@ -41,24 +44,38 @@ export async function search(ctx: Context<{ keywords: string }>) {
     }
 
     const escapedKeywords = RegexEscape(keywords);
-    const users = await User.find(
-        { username: { $regex: escapedKeywords } },
-        { avatar: 1, username: 1 },
-    );
-    const groups = await Group.find(
-        { name: { $regex: escapedKeywords }, priGroup: { $ne: '01' } },
-        { avatar: 1, name: 1, members: 1 },
-    );
+    logger.info('[search] 转义后的关键词:', escapedKeywords);
+    
+    try {
+        const users = await User.find(
+            { username: { $regex: escapedKeywords } },
+            { avatar: 1, username: 1 },
+        );
+        logger.info('[search] 找到用户数量:', users.length);
 
-    return {
-        users,
-        groups: groups.map((group) => ({
-            _id: group._id,
-            avatar: group.avatar,
-            name: group.name,
-            members: group.members.length,
-        })),
-    };
+        const groups = await Group.find(
+            { name: { $regex: escapedKeywords }, priGroup: { $ne: '01' } },
+            { avatar: 1, name: 1, members: 1 },
+        );
+        logger.info('[search] 找到群组数量:', groups.length);
+        logger.info('[search] 群组详情:', groups.map(g => ({ name: g.name, priGroup: g.priGroup })));
+
+        const result = {
+            users,
+            groups: groups.map((group) => ({
+                _id: group._id,
+                avatar: group.avatar,
+                name: group.name,
+                members: group.members.length,
+            })),
+        };
+        
+        logger.info('[search] 返回结果:', result);
+        return result;
+    } catch (error) {
+        logger.error('[search] 搜索出错:', error);
+        throw error;
+    }
 }
 
 /**
